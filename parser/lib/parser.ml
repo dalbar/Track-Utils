@@ -56,7 +56,10 @@ let track_tokenizer track_buffer =
         else begin
           Buffer.add_char lexer_buf cur_char; loop tracks tokens (curPosition + 1)
         end
-      | '\n' -> Buffer.clear lexer_buf; loop ((List.rev tokens)::tracks) [] (curPosition+1)
+      | '\n' ->
+        let tmp_tokens = cons_non_empty_buffer_as_word lexer_buf tokens in
+        Buffer.clear lexer_buf;
+        loop (List.rev tmp_tokens::tracks) [] (curPosition+1)
       | _ -> Buffer.add_char lexer_buf cur_char; loop tracks tokens (curPosition + 1)
     with Invalid_argument _ -> (List.rev tokens)::tracks
   in loop [] [] 0
