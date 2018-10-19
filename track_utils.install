@@ -1,0 +1,26 @@
+lib: [
+  "_build/install/default/lib/track_utils/META" {"META"}
+  "_build/install/default/lib/track_utils/opam" {"opam"}
+  "_build/install/default/lib/track_utils/parser/parser.ml" {"parser/parser.ml"}
+  "_build/install/default/lib/track_utils/parser/parser.mli" {"parser/parser.mli"}
+  "_build/install/default/lib/track_utils/parser/track_utils.parser.dune" {"parser/track_utils.parser.dune"}
+  "_build/install/default/lib/track_utils/parser/track_utils_parser.a" {"parser/track_utils_parser.a"}
+  "_build/install/default/lib/track_utils/parser/track_utils_parser.cma" {"parser/track_utils_parser.cma"}
+  "_build/install/default/lib/track_utils/parser/track_utils_parser.cmi" {"parser/track_utils_parser.cmi"}
+  "_build/install/default/lib/track_utils/parser/track_utils_parser.cmt" {"parser/track_utils_parser.cmt"}
+  "_build/install/default/lib/track_utils/parser/track_utils_parser.cmx" {"parser/track_utils_parser.cmx"}
+  "_build/install/default/lib/track_utils/parser/track_utils_parser.cmxa" {"parser/track_utils_parser.cmxa"}
+  "_build/install/default/lib/track_utils/parser/track_utils_parser.cmxs" {"parser/track_utils_parser.cmxs"}
+  "_build/install/default/lib/track_utils/parser/track_utils_parser.ml" {"parser/track_utils_parser.ml"}
+  "_build/install/default/lib/track_utils/parser/track_utils_parser__Parser.cmi" {"parser/track_utils_parser__Parser.cmi"}
+  "_build/install/default/lib/track_utils/parser/track_utils_parser__Parser.cmt" {"parser/track_utils_parser__Parser.cmt"}
+  "_build/install/default/lib/track_utils/parser/track_utils_parser__Parser.cmti" {"parser/track_utils_parser__Parser.cmti"}
+  "_build/install/default/lib/track_utils/parser/track_utils_parser__Parser.cmx" {"parser/track_utils_parser__Parser.cmx"}
+]
+bin: [
+  "_build/install/default/bin/menu-main" {"menu-main"}
+]
+doc: [
+  "_build/install/default/doc/track_utils/LICENSE"
+  "_build/install/default/doc/track_utils/README.md"
+]
