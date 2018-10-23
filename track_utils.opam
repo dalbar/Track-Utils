@@ -7,4 +7,6 @@ authors: "Baran Dalgic <baran.dalgic@rwth-aachen.de>"
 depends: [
   "dune" (build)
   "alcotest" (test)
+  "fmt"
+  "containers"
 ]
