@@ -1,0 +1,14 @@
+sudo: required
+
+language: ocaml 
+
+services:
+  - docker
+
+before_install:
+- docker pull ocaml/opam2-staging
+
+script:
+- docker run "opam install dune --yes"
+- docker run "opam install ."
+- docker run "dune test && dune build"
