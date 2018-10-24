@@ -4,9 +4,6 @@ version: "0.1"
 synopsis: "Manage and Parse Tracks"
 maintainer: "Baran Dalgic <baran.dalgic@rwth-aachen.de>"
 authors: "Baran Dalgic <baran.dalgic@rwth-aachen.de>"
-depends: [
-  "dune" (build)
-  "alcotest" (test)
-  "fmt"
-  "containers"
-]
+homepage: "https://github.com/dalbar/track_utils"
+bug-reports: "https://github.com/dalbar/track_utils"
+depends: [ "dune" "alcotest" "containers" ]

@@ -21,10 +21,12 @@ module Track_Tokens :
       | Word of string
       | Prefix of prefix
       | Delimiter of delimiter
+    val flush_buffer : Buffer.t -> string
     val cons_non_empty_buffer_as_word :
       Buffer.t -> track_token list -> track_token list
     val buffer_prev_element : Buffer.t -> int -> char
     val buffer_next_element : Buffer.t -> int -> char
+    val token_to_string : track_token -> string
     val track_tokenizer : Buffer.t -> track_token list list
   end
 module Track :
@@ -106,3 +108,4 @@ module Track_Map :
   end
 val reduce_string_list : string list -> string
 val parse_track_tokens : Track_Tokens.track_token list -> string Track_Map.t
+val token_list_to_string : Track_Tokens.track_token list -> string
