@@ -3,7 +3,6 @@ module Track_Tokens = struct
 
   type delimiter =
     | Slash
-    | Backslash
     | OpeningCurlyBracket
     | OpeningSquareBracket
     | ClosingCurlyBracket
@@ -13,7 +12,6 @@ module Track_Tokens = struct
   let delimiter_to_string dl =
     match dl with
     | Slash -> "/"
-    | Backslash -> "\\"
     | OpeningCurlyBracket -> "("
     | ClosingCurlyBracket -> ")"
     | OpeningSquareBracket -> "["
@@ -118,43 +116,89 @@ module Track_Tokens = struct
 
 
 end
-module Track = struct
+module Track_Table = struct
   type extensions = | WAV | MP3 | MP4
-  type t = string
-  let extension_to_string ext =
-    match ext with
-    | WAV -> "wav"
-    | MP3 -> "mp3"
-    | MP4 -> "mp4"
 
-  let year = "3000"
-  let author = ""
-  let author_plus : string list = []
-  let title = ""
-  let title_plus : string list = []
-  let version = ""
-  let version_plus: string list = []
-  let format = ""
-  let extension = WAV
+  let inital_key_values = [
+    "author", "";
+    "features", "";
+    "vinyl", "no";
+    "title", "";
+    "title_plus", "";
+    "version", "";
+    "version_plus", "";
+    "extensions", "";
+    "year", ""
+  ]
 
-  let compare k1 k2 = if k1 = k2 then 1 else 0
-
+  let empty = CCHashtbl.Poly.of_list(inital_key_values)
 end
 
-module Track_Map = CCMap.Make(Track)
 
-let reduce_string_list s_list =
-  List.fold_left (fun x y -> x ^ y) "" s_list
+open Track_Tokens
+
+type track_block =
+  | Year
+  | AuthorAndPrefix
+  | Title
+  | Version
+  | Extension
+
 let parse_track_tokens tokens =
-  let rec loop tokens track_map acc =
-    match tokens with
-    | [] -> track_map
-    | (Track_Tokens.Word "r")::rest -> loop rest track_map ("r"::acc)
-    | _ ->
-      let tmp_map = Track_Map.add "path" (reduce_string_list acc) track_map in
-      loop [] tmp_map []
+  let track_table = Track_Table.empty in
+  let inc_bracket_depth depth = if depth < 2 then depth + 1 else 22 in
+  let dec_bracket_depth depth = if depth > 0 then depth - 1 else 0 in
+  let rec loop tokens word_acc bracket_depth track_block  =
+    let cur_info = String.concat " " word_acc in
+    match tokens, track_block with
+    | [], AuthorAndPrefix ->
+      Hashtbl.replace track_table "author" cur_info;
+    | [], Year -> Hashtbl.replace track_table "year" cur_info;
+    | [], _ -> ()
+    | (Operator Dot)::rest, Extension ->
+      Hashtbl.replace track_table "extensions" cur_info;
+      loop rest [] bracket_depth Extension
+    | (Operator _)::rest, _ -> loop rest word_acc bracket_depth track_block
+    | (Prefix Vinyl)::rest, _ ->
+      Hashtbl.replace track_table "author" cur_info;
+      Hashtbl.replace track_table "vinyl" "yes";
+      loop rest [] bracket_depth Version
+    | (Delimiter Slash)::rest, AuthorAndPrefix ->
+      Hashtbl.replace track_table "author" cur_info;
+      loop rest [] bracket_depth Year
+    | (Delimiter AuthorTitleDelimiter)::rest, _ ->
+      Hashtbl.replace track_table "title" cur_info;
+      loop rest [] 0 AuthorAndPrefix
+    | (Delimiter ClosingCurlyBracket  |  Delimiter ClosingSquareBracket)::rest, Extension  ->
+      loop rest [] (inc_bracket_depth bracket_depth) Version
+    | (Delimiter (ClosingCurlyBracket | ClosingSquareBracket))::rest, _ ->
+      loop rest [] (inc_bracket_depth bracket_depth) track_block
+    | (Delimiter (OpeningCurlyBracket | OpeningSquareBracket))::rest, Version ->
+      let new_depth = dec_bracket_depth bracket_depth in
+      if new_depth = 0 then begin
+        Hashtbl.replace track_table "version" cur_info;
+        loop rest [] new_depth Title
+      end
+      else if new_depth = 1 then begin
+        Hashtbl.add track_table "version_plus" cur_info;
+        loop rest [] new_depth Version
+      end
+      else loop rest ("["::word_acc) 0 Version
+    | (Delimiter (OpeningCurlyBracket | OpeningSquareBracket))::rest, Title ->
+      let new_depth = dec_bracket_depth bracket_depth in
+      if new_depth = 0 then begin
+        Hashtbl.add track_table "title_plus" cur_info;
+        loop rest [] new_depth Title
+      end
+      else begin
+        loop rest ("["::word_acc) 0 Version
+      end
+    | (Word w)::rest, _ -> loop rest (w::word_acc) bracket_depth track_block
+    | (Delimiter _)::rest, _ -> loop rest word_acc bracket_depth track_block
   in
-  loop tokens Track_Map.empty []
+  let reserved_tokens = List.rev tokens in
+  loop reserved_tokens [] 0 Extension;
+  CCHashtbl.to_list track_table
 
 let token_list_to_string list =
   let token_to_string = Track_Tokens.token_to_string in
