@@ -1,6 +1,6 @@
 open Track_utils_parser.Parser
 
-let wav_no_version = "1999/Sample Artist - Sample Track.wav\n"
+let wav_no_version = "1999/Sample Artist - Sample Track.wav"
 let wav_token_string = "1999;/;Sample;Artist;-;Sample;Track;.;wav"
 
 let mp4_mixed_frensh = "1m4a/Yann Tiersen - Comptine D'Un Autre Été, L'Après-Midi (Live).2008.m4a"

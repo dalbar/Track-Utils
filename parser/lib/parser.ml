@@ -75,13 +75,17 @@ module Track_Tokens = struct
     | Delimiter d -> delimiter_to_string d
 
   let track_tokenizer track_buffer =
+    let buffer_len = Buffer.length track_buffer in
+    let tmp_buffer = Buffer.create buffer_len in
+    Buffer.add_string tmp_buffer (Buffer.contents track_buffer);
+    Buffer.add_char tmp_buffer '\n';
     let rec loop tracks tokens word_acc cur_position =
       try
-        let cur_char = Buffer.nth track_buffer cur_position in
+        let cur_char = Buffer.nth tmp_buffer cur_position in
         let next_word_acc = word_acc ^ Char.escaped cur_char in
         let cur_tokens = Word word_acc::tokens in
         match cur_char with
-        | 'v' -> if buffer_next_element track_buffer cur_position = '_' then begin
+        | 'v' -> if buffer_next_element tmp_buffer cur_position = '_' then begin
             loop tracks (Prefix Vinyl::tokens) "" (cur_position+2)
           end
           else begin
@@ -98,8 +102,8 @@ module Track_Tokens = struct
         | '/' ->
           loop tracks (Delimiter Slash::cur_tokens) "" (cur_position + 1)
         | ' ' ->
-          if buffer_next_element track_buffer cur_position = '-'
-          && buffer_next_element track_buffer (cur_position + 1) = ' ' then begin
+          if buffer_next_element tmp_buffer cur_position = '-'
+          && buffer_next_element tmp_buffer (cur_position + 1) = ' ' then begin
             loop tracks (Delimiter AuthorTitleDelimiter::cur_tokens) "" (cur_position + 3)
           end
           else begin
