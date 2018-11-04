@@ -3,6 +3,8 @@ open Track_utils_parser.Parser
 let wav_no_version = "1999/Sample Artist - Sample Track.wav"
 let wav_token_string = "1999;/;Sample;Artist;-;Sample;Track;.;wav"
 
+let wav_mixed = "1992/v_Chez Damier feature Alu & Mic - Can You Feel It (more info (a b c)) (A 2 1:2 Step (version plus 1) (version plus 2 (useless add))).wav"
+
 let mp4_mixed_frensh = "1m4a/Yann Tiersen - Comptine D'Un Autre Été, L'Après-Midi (Live).2008.m4a"
 
 let sample_use () =
@@ -13,7 +15,7 @@ let sample_use () =
   tokens
 
 let test_tokenizer_simple_wav_token () =
-let test_buffer = Buffer.create 180 in
+  let test_buffer = Buffer.create 180 in
   Buffer.add_string test_buffer wav_no_version;
   let tokens = Track_Tokens.track_tokenizer test_buffer in
   let token_string = token_list_to_string (List.nth tokens 0) in
@@ -21,5 +23,5 @@ let test_buffer = Buffer.create 180 in
   Alcotest.(check string) "Simple Wav without version" wav_token_string token_string
 
 let tests = [
-    "Test tokenizer", `Quick, test_tokenizer_simple_wav_token;
+  "Test tokenizer", `Quick, test_tokenizer_simple_wav_token;
 ]

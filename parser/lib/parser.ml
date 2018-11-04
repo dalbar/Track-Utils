@@ -74,6 +74,7 @@ module Track_Tokens = struct
     | Prefix p -> prefix_to_string p
     | Delimiter d -> delimiter_to_string d
 
+
   let track_tokenizer track_buffer =
     let buffer_len = Buffer.length track_buffer in
     let tmp_buffer = Buffer.create buffer_len in
@@ -118,6 +119,10 @@ module Track_Tokens = struct
         tracks
     in loop [] [] "" 0
 
+  let track_tokenizer_string track_string = 
+    let in_buffer = Buffer.create 160 in
+    Buffer.add_string in_buffer track_string;
+    track_tokenizer in_buffer
 
 end
 module Track_Table = struct
@@ -150,14 +155,15 @@ type track_block =
 
 let parse_track_tokens tokens =
   let track_table = Track_Table.empty in
-  let inc_bracket_depth depth = if depth < 2 then depth + 1 else 22 in
-  let dec_bracket_depth depth = if depth > 0 then depth - 1 else 0 in
+  let inc_bracket_depth depth = depth + 1 in
+  let dec_bracket_depth depth = depth - 1 in
   let rec loop tokens word_acc bracket_depth track_block  =
     let cur_info = String.concat " " word_acc in
     match tokens, track_block with
     | [], AuthorAndPrefix ->
       Hashtbl.replace track_table "author" cur_info;
-    | [], Year -> Hashtbl.replace track_table "year" cur_info;
+    | [], Year -> 
+      Hashtbl.replace track_table "year" cur_info;
     | [], _ -> ()
     | (Operator Dot)::rest, Extension ->
       Hashtbl.replace track_table "extensions" cur_info;
@@ -166,17 +172,29 @@ let parse_track_tokens tokens =
     | (Prefix Vinyl)::rest, _ ->
       Hashtbl.replace track_table "author" cur_info;
       Hashtbl.replace track_table "vinyl" "yes";
-      loop rest [] bracket_depth Version
+      loop rest [] bracket_depth AuthorAndPrefix
     | (Delimiter Slash)::rest, AuthorAndPrefix ->
-      Hashtbl.replace track_table "author" cur_info;
+      if Hashtbl.find track_table "author" = "" then Hashtbl.replace track_table "author" cur_info else ();
       loop rest [] bracket_depth Year
     | (Delimiter AuthorTitleDelimiter)::rest, _ ->
       Hashtbl.replace track_table "title" cur_info;
       loop rest [] 0 AuthorAndPrefix
     | (Delimiter ClosingCurlyBracket  |  Delimiter ClosingSquareBracket)::rest, Extension  ->
       loop rest [] (inc_bracket_depth bracket_depth) Version
-    | (Delimiter (ClosingCurlyBracket | ClosingSquareBracket))::rest, _ ->
-      loop rest [] (inc_bracket_depth bracket_depth) track_block
+    | (Delimiter (ClosingCurlyBracket | ClosingSquareBracket))::rest, Title ->
+      let new_depth = inc_bracket_depth bracket_depth in 
+      if new_depth > 1 then begin
+        let bracket = Track_Tokens.token_to_string (List.nth tokens 0) in
+        loop rest (bracket::word_acc) (inc_bracket_depth bracket_depth) Title 
+      end
+      else loop rest [] (inc_bracket_depth bracket_depth) track_block
+    | (Delimiter (ClosingCurlyBracket | ClosingSquareBracket))::rest, Version ->
+      let new_depth = inc_bracket_depth bracket_depth in 
+      if new_depth > 2 then begin
+        let bracket = Track_Tokens.token_to_string (List.nth tokens 0) in
+        loop rest (bracket::word_acc) (inc_bracket_depth bracket_depth) Version 
+      end
+      else loop rest [] (inc_bracket_depth bracket_depth) track_block
     | (Delimiter (OpeningCurlyBracket | OpeningSquareBracket))::rest, Version ->
       let new_depth = dec_bracket_depth bracket_depth in
       if new_depth = 0 then begin
@@ -184,19 +202,32 @@ let parse_track_tokens tokens =
         loop rest [] new_depth Title
       end
       else if new_depth = 1 then begin
-        Hashtbl.add track_table "version_plus" cur_info;
+        if Hashtbl.find track_table "version_plus" = "" then begin
+          Hashtbl.replace track_table "version_plus" cur_info
+        end
+        else Hashtbl.add track_table "version_plus" cur_info;
         loop rest [] new_depth Version
       end
-      else loop rest ("["::word_acc) 0 Version
+      else begin
+        let bracket = Track_Tokens.token_to_string (List.nth tokens 0) in
+        loop rest (bracket::word_acc) new_depth Version
+      end
     | (Delimiter (OpeningCurlyBracket | OpeningSquareBracket))::rest, Title ->
       let new_depth = dec_bracket_depth bracket_depth in
       if new_depth = 0 then begin
-        Hashtbl.add track_table "title_plus" cur_info;
+        Hashtbl.replace track_table "title_plus" cur_info;
         loop rest [] new_depth Title
       end
       else begin
-        loop rest ("["::word_acc) 0 Version
+        let bracket = Track_Tokens.token_to_string (List.nth tokens 0) in
+        loop rest (bracket::word_acc) new_depth Title
       end
+    | (Word ("feature" | "feat" | "&"))::rest, AuthorAndPrefix -> 
+      if Hashtbl.find track_table "features" = "" then begin 
+        Hashtbl.replace track_table "features" cur_info 
+      end 
+      else Hashtbl.add track_table "features" cur_info;
+      loop rest [] bracket_depth AuthorAndPrefix
     | (Word w)::rest, _ -> loop rest (w::word_acc) bracket_depth track_block
     | (Delimiter _)::rest, _ -> loop rest word_acc bracket_depth track_block
   in
@@ -204,6 +235,8 @@ let parse_track_tokens tokens =
   loop reserved_tokens [] 0 Extension;
   CCHashtbl.to_list track_table
 
+let parse_track_tokens_list token_list = 
+  List.map parse_track_tokens token_list
 let token_list_to_string list =
   let token_to_string = Track_Tokens.token_to_string in
   let string_list = List.map token_to_string list in

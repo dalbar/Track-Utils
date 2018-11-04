@@ -27,6 +27,7 @@ module Track_Tokens :
     val buffer_next_element : Buffer.t -> int -> char
     val token_to_string : track_token -> string
     val track_tokenizer : Buffer.t -> track_token list list
+    val track_tokenizer_string : string -> track_token list list
   end
 module Track_Table :
   sig
@@ -37,4 +38,6 @@ module Track_Table :
 type track_block = Year | AuthorAndPrefix | Title | Version | Extension
 val parse_track_tokens :
   Track_Tokens.track_token list -> (string * string) list
+val parse_track_tokens_list :
+  Track_Tokens.track_token list list -> (string * string) list list
 val token_list_to_string : Track_Tokens.track_token list -> string
