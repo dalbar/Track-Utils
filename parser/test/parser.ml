@@ -5,6 +5,11 @@ let wav_token_string = "1999;/;Sample;Artist;-;Sample;Track;.;wav"
 
 let wav_mixed = "1992/v_Chez Damier feature Alu & Mic - Can You Feel It (more info (a b c)) (A 2 1:2 Step (version plus 1) (version plus 2 (useless add))).wav"
 
+let mp3_1 = "1mp3/Black - Wonderful Life (Caval & Razaar Edit 2011).2011.mp3"
+let mp3_2 = "1mp3/Black - Wonderful Life (Kenny Ground & Dave Martins Bootleg).2011.mp3"
+let mp3_3 = "1mp3/Black & Marty ft random - Wonderful Life (more info for title) (Nick Tohme Bootleg (Special Version)).2011.mp3"
+let mp3_4 = "1mp3/Jamie Woon - Night Air (Official Video).2010.mp3"
+
 let mp4_mixed_frensh = "1m4a/Yann Tiersen - Comptine D'Un Autre Été, L'Après-Midi (Live).2008.m4a"
 
 let sample_use () =

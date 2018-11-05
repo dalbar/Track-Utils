@@ -137,7 +137,8 @@ module Track_Table = struct
     "version", "";
     "version_plus", "";
     "extensions", "";
-    "year", ""
+    "year", "";
+    "misc", ""
   ]
 
   let empty = CCHashtbl.Poly.of_list(inital_key_values)
@@ -153,6 +154,8 @@ type track_block =
   | Version
   | Extension
 
+let year_regexp = Re.Perl.compile (Re.Perl.re "^[1-9][0-9]{3}$");;
+
 let parse_track_tokens tokens =
   let track_table = Track_Table.empty in
   let inc_bracket_depth depth = depth + 1 in
@@ -163,11 +166,27 @@ let parse_track_tokens tokens =
     | [], AuthorAndPrefix ->
       Hashtbl.replace track_table "author" cur_info;
     | [], Year -> 
-      Hashtbl.replace track_table "year" cur_info;
-    | [], _ -> ()
+      let years_list = Re.matches year_regexp cur_info in
+      if List.length years_list > 0 then begin
+        Hashtbl.replace track_table "year" cur_info 
+      end
+      else if Hashtbl.find track_table "misc" = "" then begin 
+        Hashtbl.replace track_table "misc" cur_info 
+      end
+      else Hashtbl.add track_table "misc" cur_info;    | [], _ -> ()
     | (Operator Dot)::rest, Extension ->
       Hashtbl.replace track_table "extensions" cur_info;
-      loop rest [] bracket_depth Extension
+      loop rest [] bracket_depth Version
+    | (Operator Dot)::rest, Version ->
+      let years_list = Re.matches year_regexp cur_info in
+      if List.length years_list > 0 then begin
+        Hashtbl.replace track_table "year" cur_info 
+      end
+      else if Hashtbl.find track_table "misc" = "" then begin 
+        Hashtbl.add track_table "misc" cur_info 
+      end
+      else Hashtbl.replace track_table "misc" cur_info;
+      loop rest [] bracket_depth track_block
     | (Operator _)::rest, _ -> loop rest word_acc bracket_depth track_block
     | (Prefix Vinyl)::rest, _ ->
       Hashtbl.replace track_table "author" cur_info;
@@ -222,7 +241,7 @@ let parse_track_tokens tokens =
         let bracket = Track_Tokens.token_to_string (List.nth tokens 0) in
         loop rest (bracket::word_acc) new_depth Title
       end
-    | (Word ("feature" | "feat" | "&"))::rest, AuthorAndPrefix -> 
+    | (Word ("feature" | "feat" | "ft" | "with"))::rest, AuthorAndPrefix -> 
       if Hashtbl.find track_table "features" = "" then begin 
         Hashtbl.replace track_table "features" cur_info 
       end 
