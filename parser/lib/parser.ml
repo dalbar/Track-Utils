@@ -147,6 +147,18 @@ end
 
 open Track_Tokens
 
+type track_record = {
+  year: string;
+  vinyl: bool;
+  author: string;
+  features: string list;
+  title: string;
+  title_plus: string list;
+  version: string;
+  version_plus: string list;
+  extension: string
+}
+
 type track_block =
   | Year
   | AuthorAndPrefix
@@ -156,7 +168,7 @@ type track_block =
 
 let year_regexp = Re.Perl.compile (Re.Perl.re "^[1-9][0-9]{3}$");;
 
-let parse_track_tokens tokens =
+let parse_track_tokens_to_hashtbl tokens =
   let track_table = Track_Table.empty in
   let inc_bracket_depth depth = depth + 1 in
   let dec_bracket_depth depth = depth - 1 in
@@ -175,7 +187,7 @@ let parse_track_tokens tokens =
       end
       else Hashtbl.add track_table "misc" cur_info;    | [], _ -> ()
     | (Operator Dot)::rest, Extension ->
-      Hashtbl.replace track_table "extensions" cur_info;
+      Hashtbl.replace track_table "extension" cur_info;
       loop rest [] bracket_depth Version
     | (Operator Dot)::rest, Version ->
       let years_list = Re.matches year_regexp cur_info in
@@ -252,11 +264,49 @@ let parse_track_tokens tokens =
   in
   let reserved_tokens = List.rev tokens in
   loop reserved_tokens [] 0 Extension;
-  CCHashtbl.to_list track_table
+  track_table
+
+let token_hashtbl_to_token_record hashtbl = 
+  let find key = Hashtbl.find hashtbl key in
+  let find_all key = Hashtbl.find_all hashtbl key in
+  {
+    year = find "year";
+    vinyl = find "vinyl" = "yes";
+    author = find "author";
+    features = find_all "features";
+    title = find "title";
+    title_plus = find_all "title_plus";
+    version = find "version";
+    version_plus = find_all "version_plus";
+    extension = find "extension"
+  }
+
+let parse_track_tokens tokens = 
+  token_hashtbl_to_token_record @@ parse_track_tokens_to_hashtbl tokens
 
 let parse_track_tokens_list token_list = 
   List.map parse_track_tokens token_list
+
 let token_list_to_string list =
   let token_to_string = Track_Tokens.token_to_string in
   let string_list = List.map token_to_string list in
   String.concat ";" string_list
+
+let token_key_to_priority key = 
+  match key with 
+  | "year" -> 0
+  | "vinyl" -> 1
+  | "author" -> 2
+  | "features" -> 3
+  | "title" -> 4
+  | "title_plus" -> 5
+  | "version" -> 6
+  | "version_plus" -> 7
+  | "extension" -> 8
+  | _ -> 10
+
+let stringify_token_list track_token_list = 
+  let prio_comparision (key1, _) (key2, _) = token_key_to_priority key1 - token_key_to_priority key2 in
+  let sorted = CCList.sort prio_comparision track_token_list in 
+  let value_list = CCList.map (fun (_, value) -> value) sorted in
+  List.fold_left (fun a b -> if b = "" then a else a ^ " " ^ b) "" value_list

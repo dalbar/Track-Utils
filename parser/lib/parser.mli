@@ -35,9 +35,26 @@ module Track_Table :
     val inital_key_values : (string * string) list
     val empty : (string, string) Hashtbl.t
   end
+type track_record = {
+  year : string;
+  vinyl : bool;
+  author : string;
+  features : string list;
+  title : string;
+  title_plus : string list;
+  version : string;
+  version_plus : string list;
+  extension : string;
+}
 type track_block = Year | AuthorAndPrefix | Title | Version | Extension
-val parse_track_tokens :
-  Track_Tokens.track_token list -> (string * string) list
+val year_regexp : Re__.Core.re
+val parse_track_tokens_to_hashtbl :
+  Track_Tokens.track_token list -> (string, string) Hashtbl.t
+val token_hashtbl_to_token_record :
+  (string, string) Hashtbl.t -> track_record
+val parse_track_tokens : Track_Tokens.track_token list -> track_record
 val parse_track_tokens_list :
-  Track_Tokens.track_token list list -> (string * string) list list
+  Track_Tokens.track_token list list -> track_record list
 val token_list_to_string : Track_Tokens.track_token list -> string
+val token_key_to_priority : string -> int
+val stringify_token_list : (string * string) list -> string
