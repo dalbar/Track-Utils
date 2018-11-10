@@ -2,5 +2,5 @@
   (name track_utils_shortener)
   (public_name track_utils.shortener)
   (synopsis "A shortener for Track Lists")
-  (libraries  containers track_utils.parser)
+  (libraries  containers track_utils.parser re)
 )
