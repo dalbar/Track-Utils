@@ -39,7 +39,7 @@ type track_record = {
   year : string;
   vinyl : bool;
   author : string;
-  features : string list;
+  features : string;
   title : string;
   title_plus : string list;
   version : string;
@@ -56,5 +56,4 @@ val parse_track_tokens : Track_Tokens.track_token list -> track_record
 val parse_track_tokens_list :
   Track_Tokens.track_token list list -> track_record list
 val token_list_to_string : Track_Tokens.track_token list -> string
-val token_key_to_priority : string -> int
-val stringify_token_list : (string * string) list -> string
+val stringify_token_record : track_record -> string

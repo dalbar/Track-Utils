@@ -151,7 +151,7 @@ type track_record = {
   year: string;
   vinyl: bool;
   author: string;
-  features: string list;
+  features: string;
   title: string;
   title_plus: string list;
   version: string;
@@ -253,11 +253,8 @@ let parse_track_tokens_to_hashtbl tokens =
         let bracket = Track_Tokens.token_to_string (List.nth tokens 0) in
         loop rest (bracket::word_acc) new_depth Title
       end
-    | (Word ("feature" | "feat" | "ft" | "with"))::rest, AuthorAndPrefix -> 
-      if Hashtbl.find track_table "features" = "" then begin 
-        Hashtbl.replace track_table "features" cur_info 
-      end 
-      else Hashtbl.add track_table "features" cur_info;
+    | (Word ("feature" | "feat" | "ft" | "with"))::rest, AuthorAndPrefix ->  
+      Hashtbl.replace track_table "features" cur_info;
       loop rest [] bracket_depth AuthorAndPrefix
     | (Word w)::rest, _ -> loop rest (w::word_acc) bracket_depth track_block
     | (Delimiter _)::rest, _ -> loop rest word_acc bracket_depth track_block
@@ -273,7 +270,7 @@ let token_hashtbl_to_token_record hashtbl =
     year = find "year";
     vinyl = find "vinyl" = "yes";
     author = find "author";
-    features = find_all "features";
+    features = find "features";
     title = find "title";
     title_plus = find_all "title_plus";
     version = find "version";
@@ -292,21 +289,14 @@ let token_list_to_string list =
   let string_list = List.map token_to_string list in
   String.concat ";" string_list
 
-let token_key_to_priority key = 
-  match key with 
-  | "year" -> 0
-  | "vinyl" -> 1
-  | "author" -> 2
-  | "features" -> 3
-  | "title" -> 4
-  | "title_plus" -> 5
-  | "version" -> 6
-  | "version_plus" -> 7
-  | "extension" -> 8
-  | _ -> 10
 
-let stringify_token_list track_token_list = 
-  let prio_comparision (key1, _) (key2, _) = token_key_to_priority key1 - token_key_to_priority key2 in
-  let sorted = CCList.sort prio_comparision track_token_list in 
-  let value_list = CCList.map (fun (_, value) -> value) sorted in
-  List.fold_left (fun a b -> if b = "" then a else a ^ " " ^ b) "" value_list
+let stringify_token_record track =
+  let concat_list_with_bracets list = String.trim (List.fold_left (fun acc cur -> acc ^ "(" ^ cur ^ ") ") "" list) in
+  let vinyl = if track.vinyl then "v_" else "" in 
+  let version = if track.version <> "" then " (" ^ track.version ^ (concat_list_with_bracets track.version_plus) ^ ")" else "" in
+  let title_plus = concat_list_with_bracets track.title_plus in
+  let year = track.year ^ "/" in 
+  let author_delimiter = " - " in 
+  let extension = "." ^ track.extension in 
+  let features = if track.features <> "" then " feat. " ^ track.features else "" in  
+  year ^ vinyl ^ track.author ^ features ^ author_delimiter ^ track.title ^ title_plus ^ version ^ extension
