@@ -1,0 +1,35 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: ocaml/opam:alpine-3.6_ocaml-4.04.2
+        environment:
+          TERM: xterm
+    steps:
+      - run:
+          name: Update opam
+          command: |
+            opam remote remove default
+            opam remote add default https://opam.ocaml.org
+      - checkout
+      - run:
+          name: Pin packages
+          command: |
+            opam pin add -y -n track_utils .
+      - run:
+          name: Install system dependencies
+          command: opam depext -y track_utils
+      - run:
+          name: Install OCaml dependencies
+          command: opam install --deps-only -y track_utils
+      - run:
+          name: Build
+          command: make build
+      - run:
+          name: Test
+          command: make test
+workflows:
+  version: 2
+  build:
+    jobs:
+    - build
