@@ -16,3 +16,6 @@ uninstall:
 
 clean:
 	dune clean
+
+docs: 
+	dune build @doc
