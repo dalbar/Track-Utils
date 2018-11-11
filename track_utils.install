@@ -16,6 +16,19 @@ lib: [
   "_build/install/default/lib/track_utils/parser/track_utils_parser__Parser.cmt" {"parser/track_utils_parser__Parser.cmt"}
   "_build/install/default/lib/track_utils/parser/track_utils_parser__Parser.cmti" {"parser/track_utils_parser__Parser.cmti"}
   "_build/install/default/lib/track_utils/parser/track_utils_parser__Parser.cmx" {"parser/track_utils_parser__Parser.cmx"}
+  "_build/install/default/lib/track_utils/shortener/shortener.ml" {"shortener/shortener.ml"}
+  "_build/install/default/lib/track_utils/shortener/track_utils.shortener.dune" {"shortener/track_utils.shortener.dune"}
+  "_build/install/default/lib/track_utils/shortener/track_utils_shortener.a" {"shortener/track_utils_shortener.a"}
+  "_build/install/default/lib/track_utils/shortener/track_utils_shortener.cma" {"shortener/track_utils_shortener.cma"}
+  "_build/install/default/lib/track_utils/shortener/track_utils_shortener.cmi" {"shortener/track_utils_shortener.cmi"}
+  "_build/install/default/lib/track_utils/shortener/track_utils_shortener.cmt" {"shortener/track_utils_shortener.cmt"}
+  "_build/install/default/lib/track_utils/shortener/track_utils_shortener.cmx" {"shortener/track_utils_shortener.cmx"}
+  "_build/install/default/lib/track_utils/shortener/track_utils_shortener.cmxa" {"shortener/track_utils_shortener.cmxa"}
+  "_build/install/default/lib/track_utils/shortener/track_utils_shortener.cmxs" {"shortener/track_utils_shortener.cmxs"}
+  "_build/install/default/lib/track_utils/shortener/track_utils_shortener.ml" {"shortener/track_utils_shortener.ml"}
+  "_build/install/default/lib/track_utils/shortener/track_utils_shortener__Shortener.cmi" {"shortener/track_utils_shortener__Shortener.cmi"}
+  "_build/install/default/lib/track_utils/shortener/track_utils_shortener__Shortener.cmt" {"shortener/track_utils_shortener__Shortener.cmt"}
+  "_build/install/default/lib/track_utils/shortener/track_utils_shortener__Shortener.cmx" {"shortener/track_utils_shortener__Shortener.cmx"}
 ]
 bin: [
   "_build/install/default/bin/menu-main" {"menu-main"}
