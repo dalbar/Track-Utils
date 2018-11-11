@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: ocaml/opam:alpine
+      - image: ocaml/opam2
         environment:
           TERM: xterm
     steps:
