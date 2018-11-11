@@ -3,8 +3,6 @@ jobs:
   build:
     docker:
       - image: ocaml/opam2
-        environment:
-          TERM: xterm
     steps:
       - checkout
       - run:
