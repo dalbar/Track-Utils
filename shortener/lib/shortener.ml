@@ -2,7 +2,7 @@ open Track_utils_parser.Parser
 
 let special_symbol = "_"
 let cut_version_plus track_details special_symbol = 
-  { track_details with title_plus = [special_symbol]}
+  { track_details with version_plus = [special_symbol]}
 
 let cut_title_plus track_details special_symbol =
   { track_details with title_plus = [special_symbol]}
@@ -48,3 +48,20 @@ let shorten_track  ?(special_symbol = special_symbol) ?(treshhold = 85) track_de
       | Title -> loop (title_to_initials record) Version
       | Version -> record in
   loop cur_res Author
+
+let shorten_track_list ?(special_symbol = special_symbol) ?(treshhold = 85) record_list =
+  let track_map = CCHashtbl.of_list [] in
+  let has_duplicate name = Hashtbl.mem track_map name in
+  let resolve_conflict record counter =  { record with extension= string_of_int counter ^ "." ^ record.extension} in
+  let shorten record = 
+    let shortened = shorten_track ~special_symbol ~treshhold record in 
+    let rec loop cur_record counter = 
+      let stringified = stringify_token_record cur_record in 
+      if has_duplicate stringified then begin 
+        let num_duplicates = counter + 1 in 
+        loop (resolve_conflict shortened num_duplicates) num_duplicates
+      end
+      else  Hashtbl.add track_map stringified record in 
+    loop shortened 0 in
+  List.iter shorten record_list;
+  track_map

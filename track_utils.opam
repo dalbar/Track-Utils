@@ -6,4 +6,4 @@ maintainer: "Baran Dalgic <baran.dalgic@rwth-aachen.de>"
 authors: "Baran Dalgic <baran.dalgic@rwth-aachen.de>"
 homepage: "https://github.com/dalbar/track_utils"
 bug-reports: "https://github.com/dalbar/track_utils"
-depends: [ "dune" "alcotest" "containers" "re" "odoc"]
+depends: [ "dune" "alcotest" "containers" "re" "odoc" "cmdliner"]
