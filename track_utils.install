@@ -31,7 +31,7 @@ lib: [
   "_build/install/default/lib/track_utils/shortener/track_utils_shortener__Shortener.cmx" {"shortener/track_utils_shortener__Shortener.cmx"}
 ]
 bin: [
-  "_build/install/default/bin/menu-main" {"menu-main"}
+  "_build/install/default/bin/track_cli" {"track_cli"}
 ]
 doc: [
   "_build/install/default/doc/track_utils/LICENSE"

@@ -57,3 +57,4 @@ val parse_track_tokens_list :
   Track_Tokens.track_token list list -> track_record list
 val token_list_to_string : Track_Tokens.track_token list -> string
 val stringify_token_record : track_record -> string
+val parse_string_list : string list -> track_record list

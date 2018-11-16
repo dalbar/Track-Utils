@@ -120,7 +120,7 @@ module Track_Tokens = struct
     in loop [] [] "" 0
 
   let track_tokenizer_string track_string = 
-    let in_buffer = Buffer.create 160 in
+    let in_buffer = Buffer.create (String.length track_string * 2) in
     Buffer.add_string in_buffer track_string;
     track_tokenizer in_buffer
 
@@ -293,10 +293,15 @@ let token_list_to_string list =
 let stringify_token_record track =
   let concat_list_with_bracets list = String.trim (List.fold_left (fun acc cur -> acc ^ "(" ^ cur ^ ") ") "" list) in
   let vinyl = if track.vinyl then "v_" else "" in 
-  let version = if track.version <> "" then " (" ^ track.version ^ (concat_list_with_bracets track.version_plus) ^ ")" else "" in
-  let title_plus = concat_list_with_bracets track.title_plus in
-  let year = track.year ^ "/" in 
+  let version_plus = if not @@ List.mem "" track.version_plus then concat_list_with_bracets track.version_plus else "" in
+  let version = if track.version <> "" then " (" ^ track.version ^ version_plus ^ ")" else "" in
+  let title_plus = if not @@ List.mem "" track.title_plus then concat_list_with_bracets track.title_plus else "" in
+  let year = if track.year <> "" then track.year ^ "/" else "" in 
   let author_delimiter = " - " in 
   let extension = "." ^ track.extension in 
   let features = if track.features <> "" then " feat. " ^ track.features else "" in  
   year ^ vinyl ^ track.author ^ features ^ author_delimiter ^ track.title ^ title_plus ^ version ^ extension
+
+let parse_string_list list = 
+  let tracks = String.concat "\n" list in
+  parse_track_tokens_list (Track_Tokens.track_tokenizer_string tracks)
