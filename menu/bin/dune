@@ -1,7 +1,0 @@
-(executables
-  (names main)
-  (public_names menu-main)
-  (libraries
-    track_utils.parser cmdliner
-  )
-)

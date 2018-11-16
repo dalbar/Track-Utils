@@ -1,0 +1,7 @@
+(executables
+  (names track_cli)
+  (public_names track_cli)
+  (libraries
+    track_utils.parser cmdliner track_utils.shortener
+  )
+)
