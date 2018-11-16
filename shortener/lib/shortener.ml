@@ -2,13 +2,13 @@ open Track_utils_parser.Parser
 
 let special_symbol = "_"
 let cut_version_plus track_details special_symbol = 
-  { track_details with version_plus = [special_symbol]}
+  if not @@ List.mem "" track_details.version_plus then { track_details with version_plus = [special_symbol]} else track_details
 
 let cut_title_plus track_details special_symbol =
-  { track_details with title_plus = [special_symbol]}
+  if not @@ List.mem "" track_details.title_plus then { track_details with title_plus = [special_symbol]} else track_details
 
 let cut_features track_details special_symbol = 
-  { track_details with features = special_symbol}
+  if track_details.features <> "" then { track_details with features = special_symbol} else track_details
 
 let cut_conjunctive_authors track_details special_symbol = 
   let split_conjunction = Re.Perl.compile (Re.Perl.re "\\s*(&|vs)\\s*") in
@@ -64,4 +64,4 @@ let shorten_track_list ?(special_symbol = special_symbol) ?(treshhold = 85) reco
       else  Hashtbl.add track_map stringified record in 
     loop shortened 0 in
   List.iter shorten record_list;
-  track_map
+ track_map
