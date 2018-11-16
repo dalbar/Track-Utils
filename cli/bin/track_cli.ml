@@ -16,6 +16,13 @@ let extract_track_files files =
   let validExtensions = [".mp4"; ".mp3"; ".jpg"; ".wav"; ".wmv"] in
   let isTrackFile file = List.mem (Filename.extension file) validExtensions in
   List.filter isTrackFile files
+
+let perist_key_record_mapping tbl dest = 
+  let to_write = List.map (fun (key, record) -> (key, Parser.stringify_token_record record)) @@ CCHashtbl.to_list tbl in 
+  let oc = open_out dest in 
+  List.iter (fun (key, value) -> Printf.fprintf oc "%s: %s\n" key value) to_write;
+  close_out oc
+
 let rec track_cli recurisve shorten path = 
   let rec_with_path new_poth = track_cli recurisve shorten new_poth in
   try
@@ -26,7 +33,7 @@ let rec track_cli recurisve shorten path =
        if List.length track_files > 0 then begin
        let track_records = Parser.parse_string_list track_files in
        let track_shortened_map = Shortener.shorten_track_list track_records in 
-       List.iter print_endline (CCHashtbl.keys_list track_shortened_map)
+       perist_key_record_mapping track_shortened_map @@ Filename.concat path ".track_utils";
        end;
     end;
     if recurisve then List.iter (fun new_dir -> rec_with_path new_dir) directories else ()
