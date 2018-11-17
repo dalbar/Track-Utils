@@ -44,7 +44,7 @@ module Track_Tokens = struct
     match op with
     | Dot -> "."
     | Feature ft_op -> feature_operator_to_string ft_op
-
+  
   type track_token =
     | Operator of operator
     | Word of string
@@ -130,6 +130,7 @@ module Track_Table = struct
 
   let inital_key_values = [
     "author", "";
+    "feature_operator", "";
     "features", "";
     "vinyl", "no";
     "title", "";
@@ -151,6 +152,7 @@ type track_record = {
   year: string;
   vinyl: bool;
   author: string;
+  feature_operator: string;
   features: string;
   title: string;
   title_plus: string list;
@@ -176,6 +178,8 @@ let parse_track_tokens_to_hashtbl tokens =
     let cur_info = String.concat " " word_acc in
     match tokens, track_block with
     | [], AuthorAndPrefix ->
+      print_endline "jaud";
+      print_endline cur_info;
       Hashtbl.replace track_table "author" cur_info;
     | [], Year -> 
       let years_list = Re.matches year_regexp cur_info in
@@ -205,7 +209,7 @@ let parse_track_tokens_to_hashtbl tokens =
       Hashtbl.replace track_table "vinyl" "yes";
       loop rest [] bracket_depth AuthorAndPrefix
     | (Delimiter Slash)::rest, AuthorAndPrefix ->
-      if Hashtbl.find track_table "author" = "" then Hashtbl.replace track_table "author" cur_info else ();
+      Hashtbl.replace track_table "author" cur_info;
       loop rest [] bracket_depth Year
     | (Delimiter AuthorTitleDelimiter)::rest, _ ->
       Hashtbl.replace track_table "title" cur_info;
@@ -253,7 +257,9 @@ let parse_track_tokens_to_hashtbl tokens =
         let bracket = Track_Tokens.token_to_string (List.nth tokens 0) in
         loop rest (bracket::word_acc) new_depth Title
       end
-    | (Word ("feature" | "feat" | "ft" | "with"))::rest, AuthorAndPrefix ->  
+    | (Word ("feature" | "feat" | "ft" | "with"))::rest, AuthorAndPrefix -> 
+      let op = List.hd tokens in 
+      Hashtbl.replace track_table "feature_operator" @@ token_to_string op;
       Hashtbl.replace track_table "features" cur_info;
       loop rest [] bracket_depth AuthorAndPrefix
     | (Word w)::rest, _ -> loop rest (w::word_acc) bracket_depth track_block
@@ -270,6 +276,7 @@ let token_hashtbl_to_token_record hashtbl =
     year = find "year";
     vinyl = find "vinyl" = "yes";
     author = find "author";
+    feature_operator = find "feature_operator";
     features = find "features";
     title = find "title";
     title_plus = find_all "title_plus";
@@ -291,15 +298,15 @@ let token_list_to_string list =
 
 
 let stringify_token_record track =
-  let concat_list_with_bracets list = String.trim (List.fold_left (fun acc cur -> acc ^ "(" ^ cur ^ ") ") "" list) in
+  let concat_list_with_bracets list = List.fold_left (fun acc cur -> acc ^ "(" ^ cur ^ ") ") "" list in
   let vinyl = if track.vinyl then "v_" else "" in 
   let version_plus = if not @@ List.mem "" track.version_plus then concat_list_with_bracets track.version_plus else "" in
-  let version = if track.version <> "" then " (" ^ track.version ^ version_plus ^ ")" else "" in
+  let version = if track.version <> "" then "(" ^ track.version ^ version_plus ^ ")" else "" in
   let title_plus = if not @@ List.mem "" track.title_plus then concat_list_with_bracets track.title_plus else "" in
   let year = if track.year <> "" then track.year ^ "/" else "" in 
   let author_delimiter = " - " in 
   let extension = "." ^ track.extension in 
-  let features = if track.features <> "" then " feat. " ^ track.features else "" in  
+  let features = if track.features <> "" then " " ^ track.feature_operator ^ " " ^ track.features else "" in  
   year ^ vinyl ^ track.author ^ features ^ author_delimiter ^ track.title ^ title_plus ^ version ^ extension
 
 let parse_string_list list = 

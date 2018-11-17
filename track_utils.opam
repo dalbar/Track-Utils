@@ -1,6 +1,6 @@
 opam-version: "2.0"
 name: "track_utils"
-version: "0.2"
+version: "0.3"
 synopsis: "Manage and Parse Tracks"
 maintainer: "Baran Dalgic <baran.dalgic@rwth-aachen.de>"
 authors: "Baran Dalgic <baran.dalgic@rwth-aachen.de>"

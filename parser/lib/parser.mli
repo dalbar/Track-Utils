@@ -39,6 +39,7 @@ type track_record = {
   year : string;
   vinyl : bool;
   author : string;
+  feature_operator : string;
   features : string;
   title : string;
   title_plus : string list;
