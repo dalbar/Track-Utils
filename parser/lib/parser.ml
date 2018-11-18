@@ -142,7 +142,7 @@ module Track_Table = struct
     "misc", ""
   ]
 
-  let empty = CCHashtbl.Poly.of_list(inital_key_values)
+  let empty () = CCHashtbl.Poly.of_list(inital_key_values)
 end
 
 
@@ -171,15 +171,13 @@ type track_block =
 let year_regexp = Re.Perl.compile (Re.Perl.re "^[1-9][0-9]{3}$");;
 
 let parse_track_tokens_to_hashtbl tokens =
-  let track_table = Track_Table.empty in
+  let track_table = Track_Table.empty () in
   let inc_bracket_depth depth = depth + 1 in
   let dec_bracket_depth depth = depth - 1 in
   let rec loop tokens word_acc bracket_depth track_block  =
     let cur_info = String.concat " " word_acc in
     match tokens, track_block with
     | [], AuthorAndPrefix ->
-      print_endline "jaud";
-      print_endline cur_info;
       Hashtbl.replace track_table "author" cur_info;
     | [], Year -> 
       let years_list = Re.matches year_regexp cur_info in
@@ -289,8 +287,11 @@ let parse_track_tokens tokens =
   token_hashtbl_to_token_record @@ parse_track_tokens_to_hashtbl tokens
 
 let parse_track_tokens_list token_list = 
-  List.map parse_track_tokens token_list
-
+  let rec loop token_list records = 
+    match token_list with 
+    | [] -> records 
+    | hd::rest -> loop rest ((token_hashtbl_to_token_record @@ parse_track_tokens_to_hashtbl hd)::records) in
+  loop token_list []
 let token_list_to_string list =
   let token_to_string = Track_Tokens.token_to_string in
   let string_list = List.map token_to_string list in

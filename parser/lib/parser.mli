@@ -33,7 +33,7 @@ module Track_Table :
   sig
     type extensions = WAV | MP3 | MP4
     val inital_key_values : (string * string) list
-    val empty : (string, string) Hashtbl.t
+    val empty : unit -> (string, string) Hashtbl.t
   end
 type track_record = {
   year : string;
