@@ -117,7 +117,11 @@ module Track_Tokens = struct
         | _ -> loop tracks tokens next_word_acc (cur_position + 1)
       with Invalid_argument _ ->
         tracks
-    in loop [] [] "" 0
+    in
+    match Buffer.length tmp_buffer with 
+    | 1 -> [] 
+    | _ -> loop [] [] "" 0
+    
 
   let track_tokenizer_string track_string = 
     let in_buffer = Buffer.create (String.length track_string * 2) in
@@ -171,6 +175,7 @@ type track_block =
 let year_regexp = Re.Perl.compile (Re.Perl.re "^[1-9][0-9]{3}$");;
 
 let parse_track_tokens_to_hashtbl tokens =
+  Format.printf "%d@." (List.length tokens);
   let track_table = Track_Table.empty () in
   let inc_bracket_depth depth = depth + 1 in
   let dec_bracket_depth depth = depth - 1 in
@@ -287,11 +292,9 @@ let parse_track_tokens tokens =
   token_hashtbl_to_token_record @@ parse_track_tokens_to_hashtbl tokens
 
 let parse_track_tokens_list token_list = 
-  let rec loop token_list records = 
-    match token_list with 
-    | [] -> records 
-    | hd::rest -> loop rest ((token_hashtbl_to_token_record @@ parse_track_tokens_to_hashtbl hd)::records) in
-  loop token_list []
+  List.map (fun entry -> token_hashtbl_to_token_record @@ parse_track_tokens_to_hashtbl entry) token_list
+  
+
 let token_list_to_string list =
   let token_to_string = Track_Tokens.token_to_string in
   let string_list = List.map token_to_string list in
@@ -312,4 +315,29 @@ let stringify_token_record track =
 
 let parse_string_list list = 
   let tracks = String.concat "\n" list in
-  parse_track_tokens_list (Track_Tokens.track_tokenizer_string tracks)
+  parse_track_tokens_list @@ Track_Tokens.track_tokenizer_string tracks
+
+module Org = struct
+  open Format
+  let print_property_string ppf key value =
+    fprintf ppf "@[<h>%s%s%s@[<h 2>%s@]@]@." ":" key ":    " value 
+  
+  let print_property_string_list ppf key values = 
+    let value = String.concat "; " values in 
+    print_property_string ppf key value
+
+  let print_title ppf title = 
+    fprintf ppf "@[<h>%s%s@]@." "** " title
+
+  let print_record ppf title record = 
+    let p f = f ppf in
+    p print_title title;
+    fprintf ppf ":PROPERTIES:@.";
+    p print_property_string "Author" record.author;
+    p print_property_string "Author+" record.features;
+    p print_property_string "Title" record.title;
+    p print_property_string_list "Title+" record.title_plus;
+    p print_property_string "Version" record.version;
+    p print_property_string_list "Version+" record.version_plus;
+
+end
