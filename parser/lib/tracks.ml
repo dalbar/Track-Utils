@@ -172,10 +172,11 @@ type track_block =
   | Version
   | Extension
 
+let empty = {year=""; vinyl=false; author=""; feature_operator=""; features=""; title=""; title_plus=[]; version=""; version_plus=[]; extension="" }
+
 let year_regexp = Re.Perl.compile (Re.Perl.re "^[1-9][0-9]{3}$");;
 
 let parse_track_tokens_to_hashtbl tokens =
-  Format.printf "%d@." (List.length tokens);
   let track_table = Track_Table.empty () in
   let inc_bracket_depth depth = depth + 1 in
   let dec_bracket_depth depth = depth - 1 in
@@ -316,28 +317,3 @@ let stringify_token_record track =
 let parse_string_list list = 
   let tracks = String.concat "\n" list in
   parse_track_tokens_list @@ Track_Tokens.track_tokenizer_string tracks
-
-module Org = struct
-  open Format
-  let print_property_string ppf key value =
-    fprintf ppf "@[<h>%s%s%s@[<h 2>%s@]@]@." ":" key ":    " value 
-  
-  let print_property_string_list ppf key values = 
-    let value = String.concat "; " values in 
-    print_property_string ppf key value
-
-  let print_title ppf title = 
-    fprintf ppf "@[<h>%s%s@]@." "** " title
-
-  let print_record ppf title record = 
-    let p f = f ppf in
-    p print_title title;
-    fprintf ppf ":PROPERTIES:@.";
-    p print_property_string "Author" record.author;
-    p print_property_string "Author+" record.features;
-    p print_property_string "Title" record.title;
-    p print_property_string_list "Title+" record.title_plus;
-    p print_property_string "Version" record.version;
-    p print_property_string_list "Version+" record.version_plus;
-
-end

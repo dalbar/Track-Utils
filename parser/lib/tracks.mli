@@ -59,11 +59,3 @@ val parse_track_tokens_list :
 val token_list_to_string : Track_Tokens.track_token list -> string
 val stringify_token_record : track_record -> string
 val parse_string_list : string list -> track_record list
-module Org :
-  sig
-    val print_property_string : Format.formatter -> string -> string -> unit
-    val print_property_string_list :
-      Format.formatter -> string -> string list -> unit
-    val print_title : Format.formatter -> string -> unit
-    val print_record : Format.formatter -> string -> track_record -> unit
-  end

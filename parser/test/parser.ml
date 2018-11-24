@@ -1,4 +1,4 @@
-open Track_utils_parser.Parser
+open Track_utils_parser.Tracks
 
 let wav_no_version = "1999/Sample Artist - Sample Track.wav"
 let wav_token_string = "1999;/;Sample;Artist;-;Sample;Track;.;wav"

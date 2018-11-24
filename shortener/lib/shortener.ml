@@ -1,4 +1,4 @@
-open Track_utils_parser.Parser
+open Track_utils_parser.Tracks
 
 let special_symbol = "_"
 let cut_version_plus track_details special_symbol = 
