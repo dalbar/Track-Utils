@@ -9,6 +9,15 @@ let print_property_string_list ppf key values =
   let value = String.concat "; " values in
   print_property_string ppf key value
 
+let print_header ppf mapping =
+  let _, props = mapping in
+  let extension = String.uppercase_ascii props.extension in
+  match props with
+  | {vinyl= true; _} ->
+      extension |> Format.fprintf ppf "* %s Files with VINYL@."
+  | {vinyl= false; _} ->
+      extension |> Format.fprintf ppf "* %s Files without VINYL@."
+
 let print_title ppf title = fprintf ppf "@[<h>%s%s@]@." "** " title
 
 let print_record ppf title record =
@@ -23,30 +32,40 @@ let print_record ppf title record =
   p print_property_string_list "Version+" record.version_plus ;
   fprintf ppf ":END:@."
 
+let print_group ppf group =
+  print_header ppf @@ List.nth group 0;
+  List.iter (fun (title, record) -> print_record ppf title record) group
+
+let print_groups ppf groups =
+  List.iter (fun group -> print_group ppf group) groups
+
 let filter_properties_tag raw =
   List.filter (fun entry -> entry <> ":PROPERTIES:") raw
 
 let remove_tag raw =
   let tag = Re.Perl.re ":*.:    " |> Re.Perl.compile in
-  List.nth (Re.split tag raw) 0
+  let delim = Re.Perl.re ";" |> Re.Perl.compile in
+  List.nth (Re.split tag raw) 0 |> Re.split delim
 
-let parse_entry_to_org_mapping entry =
+let parse_entry entry =
   let name =
     List.nth entry 0 |> fun raw -> String.sub raw 0 (String.length raw)
   in
   let nth_property n = List.nth entry n |> remove_tag in
+  let plain_property n = List.nth (nth_property n) 0 in
+  let empty_record = Tracks.empty in
   ( name
-  , [ ("author", nth_property 1)
-    ; ("features", nth_property 2)
-    ; ("title", nth_property 3)
-    ; ("title_plus", nth_property 4)
-    ; ("version", nth_property 5)
-    ; ("version_plus", nth_property 6) ] )
+  , { empty_record with
+      author= plain_property 0
+    ; features= plain_property 1
+    ; title= plain_property 2
+    ; title_plus= nth_property 3
+    ; version= plain_property 4
+    ; version_plus= nth_property 5 } )
 
 let parse content =
   let entry_delim = Perl.re ":END:" |> Perl.compile in
   let property_delim = Perl.re "\n" |> Perl.compile in
   split entry_delim content
   |> List.map (fun entry ->
-         split property_delim entry |> filter_properties_tag
-         |> parse_entry_to_org_mapping )
+         split property_delim entry |> filter_properties_tag |> parse_entry )

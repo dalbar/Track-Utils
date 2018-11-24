@@ -1,6 +1,35 @@
 open Track_utils_shortener
 open Track_utils_parser
 open Track_utils_helpers.Io
+open Track_utils_helpers.Ds
+open Track_utils_parser.Tracks
+
+let shortening_processing_pipe track_records concat_path1 =
+  let track_shortened_map = Shortener.shorten_track_list track_records in
+  let mapping_shortened_record = CCHashtbl.to_list track_shortened_map in
+  let mapping_shortened_old =
+    List.map
+      (fun (key, record) -> (key, Tracks.stringify_token_record record))
+      mapping_shortened_record
+  in
+  let changes =
+    List.filter (fun (key, record) -> key <> record) mapping_shortened_old
+  in
+  if List.length changes > 0 then (
+    perist_key_record_mapping changes @@ concat_path1 ".track_utils" ;
+    List.iter
+      (fun (shortened, old) ->
+        Sys.rename (concat_path1 old) (concat_path1 shortened) )
+      changes ) ;
+  mapping_shortened_record
+
+
+let org_processing_pipe mapping dest =
+  if List.length mapping > 0 then begin
+    let to_key (_, r) = (r.vinyl, r.extension) in
+    let grouped = group_by to_key mapping in
+    write_org_file grouped dest
+  end
 
 let track_cli recurisve shorten org path =
   let rec loop cur_path dic_acc =
@@ -10,33 +39,13 @@ let track_cli recurisve shorten org path =
     let track_files = extract_track_files files in
     let track_records = Tracks.parse_string_list track_files in
     let record_map =
-      if shorten then (
-        let track_shortened_map = Shortener.shorten_track_list track_records in
-        let mapping_shortened_record = CCHashtbl.to_list track_shortened_map in
-        let mapping_shortened_old =
-          List.map
-            (fun (key, record) -> (key, Tracks.stringify_token_record record))
-            mapping_shortened_record
-        in
-        let changes =
-          List.filter
-            (fun (key, record) -> key <> record)
-            mapping_shortened_old
-        in
-        if List.length changes > 0 then (
-          perist_key_record_mapping changes @@ concat_cur_path ".track_utils" ;
-          List.iter
-            (fun (shortened, old) ->
-              Sys.rename (concat_cur_path old) (concat_cur_path shortened) )
-            changes ) ;
-        mapping_shortened_record )
+      if shorten then shortening_processing_pipe track_records concat_cur_path
       else
         List.map
           (fun record -> (Tracks.stringify_token_record record, record))
           track_records
     in
-    if org && List.length record_map > 0 then
-      write_org_file record_map @@ concat_cur_path "db.org" ;
+    if org then org_processing_pipe record_map (concat_cur_path "db.org") ;
     if recurisve then
       match directories @ dic_acc with [] -> () | hd :: rest -> loop hd rest
   in

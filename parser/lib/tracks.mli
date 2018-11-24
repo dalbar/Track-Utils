@@ -48,6 +48,7 @@ type track_record = {
   extension : string;
 }
 type track_block = Year | AuthorAndPrefix | Title | Version | Extension
+val empty : track_record
 val year_regexp : Re__.Core.re
 val parse_track_tokens_to_hashtbl :
   Track_Tokens.track_token list -> (string, string) Hashtbl.t

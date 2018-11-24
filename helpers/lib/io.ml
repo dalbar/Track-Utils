@@ -36,10 +36,7 @@ let perist_key_record_mapping mapping_list dest =
     mapping_list ;
   close_out oc
 
-let write_org_file record_map dest =
+let write_org_file grouped_mapping dest =
   let oc = open_out_gen [Open_creat; Open_wronly] 0o777 dest in
   let ppf = Format.formatter_of_out_channel oc in
-  List.iter
-    (fun (title, record) -> Org.print_record ppf title record)
-    record_map ;
-  close_out oc
+  Org.print_groups ppf grouped_mapping
