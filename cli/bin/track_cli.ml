@@ -23,13 +23,11 @@ let shortening_processing_pipe track_records concat_path1 =
       changes ) ;
   mapping_shortened_record
 
-
 let org_processing_pipe mapping dest =
-  if List.length mapping > 0 then begin
+  if List.length mapping > 0 then
     let to_key (_, r) = (r.vinyl, r.extension) in
     let grouped = group_by to_key mapping in
     write_org_file grouped dest
-  end
 
 let track_cli recurisve shorten org path =
   let rec loop cur_path dic_acc =

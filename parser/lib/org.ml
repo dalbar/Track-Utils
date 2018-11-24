@@ -33,7 +33,6 @@ let print_record ppf title record =
   fprintf ppf ":END:@."
 
 let print_group ppf group =
-  print_header ppf @@ List.nth group 0;
   List.iter (fun (title, record) -> print_record ppf title record) group
 
 let print_groups ppf groups =
@@ -43,11 +42,13 @@ let filter_properties_tag raw =
   List.filter (fun entry -> entry <> ":PROPERTIES:") raw
 
 let remove_tag raw =
-  let tag = Re.Perl.re ":*.:    " |> Re.Perl.compile in
+  let tag = Re.Perl.re ":(.*):    " |> Re.Perl.compile in
   let delim = Re.Perl.re ";" |> Re.Perl.compile in
-  List.nth (Re.split tag raw) 0 |> Re.split delim
+  let values = Re.split tag raw in
+  if List.length values = 0 then [""] else List.nth values 0 |> Re.split delim
 
 let parse_entry entry =
+  printf "%d %s" (List.length entry) "----------\n" ;
   let name =
     List.nth entry 0 |> fun raw -> String.sub raw 0 (String.length raw)
   in
@@ -63,9 +64,34 @@ let parse_entry entry =
     ; version= plain_property 4
     ; version_plus= nth_property 5 } )
 
-let parse content =
-  let entry_delim = Perl.re ":END:" |> Perl.compile in
+let parse_group headers group =
+  let extension, vinyl = headers in
+  let update_with_header (name, record) =
+    (name, {record with extension; vinyl})
+  in
+  let entry_delim = Perl.re ":END:\n" |> Perl.compile in
   let property_delim = Perl.re "\n" |> Perl.compile in
-  split entry_delim content
+  split entry_delim group
   |> List.map (fun entry ->
-         split property_delim entry |> filter_properties_tag |> parse_entry )
+         split property_delim entry |> filter_properties_tag |> parse_entry
+         |> update_with_header )
+
+let extract_headers raw =
+  let text_to_vinyl text = match text with "with" -> true | _ -> false in
+  let header_regexp = Perl.re "\\* (.*) Files (.*) VINYL" |> Perl.compile in
+  let occurrences = Re.all header_regexp raw in
+  List.map
+    (fun substrings ->
+      match Group.all substrings with
+      | [|_; ftype; vinyl|] ->
+          (String.lowercase_ascii ftype, text_to_vinyl vinyl)
+      | _ -> ("UNKNOWN", false) )
+    occurrences
+
+let parse content =
+  let headers = extract_headers content in
+  let header_delim =
+    Perl.re "\\* (.*) Files (with|without) VINYL\n" |> Perl.compile
+  in
+  let groups = Re.split header_delim content in
+  List.map2 (fun header group -> parse_group header group) headers groups
