@@ -138,6 +138,11 @@ end
 
 open Track_Tokens
 
+type track_record_field =
+  | Word of string
+  | Vinyl of bool
+  | Words of string list
+
 type track_record =
   { year: string
   ; vinyl: bool
@@ -150,7 +155,12 @@ type track_record =
   ; version_plus: string list
   ; extension: string }
 
+type record_mapping = string * track_record
+
 type track_block = Year | AuthorAndPrefix | Title | Version | Extension
+
+type property_difference =
+  {key: string; diff: track_record_field * track_record_field}
 
 let empty =
   { year= ""
@@ -163,6 +173,40 @@ let empty =
   ; version= ""
   ; version_plus= []
   ; extension= "" }
+
+let key_to_field r key =
+  match key with
+  | "year" -> Word r.year
+  | "vinyl" -> Vinyl r.vinyl
+  | "author" -> Word r.author
+  | "feature_operator" -> Word r.feature_operator
+  | "features" -> Word r.features
+  | "title" -> Word r.title
+  | "title_plus" -> Words r.title_plus
+  | "version" -> Word r.version
+  | "version_plus" -> Words r.version_plus
+  | "extension" -> Word r.extension
+  | _ -> Word ""
+
+let differences_record r1 r2 =
+  let field_r1 key = key_to_field r1 key in
+  let field_r2 key = key_to_field r2 key in
+  let keys =
+    [ "year"
+    ; "vinyl"
+    ; "author"
+    ; "feature_operator"
+    ; "features"
+    ; "title"
+    ; "title_plus"
+    ; "vesion"
+    ; "version_plus"
+    ; "extension" ]
+  in
+  let paired_field =
+    List.map (fun key -> {key; diff= (field_r1 key, field_r2 key)}) keys
+  in
+  List.filter (fun {diff= f1, f2; _} -> f1 <> f2) paired_field
 
 let year_regexp = Re.Perl.compile (Re.Perl.re "^[1-9][0-9]{3}$")
 
@@ -197,7 +241,7 @@ let parse_track_tokens_to_hashtbl tokens =
     | Prefix Vinyl :: rest, _ ->
         Hashtbl.replace track_table "author" cur_info ;
         Hashtbl.replace track_table "vinyl" "yes" ;
-        loop rest [] bracket_depth AuthorAndPrefix
+        loop rest [] bracket_depth Year
     | Delimiter Slash :: rest, AuthorAndPrefix ->
         Hashtbl.replace track_table "author" cur_info ;
         loop rest [] bracket_depth Year

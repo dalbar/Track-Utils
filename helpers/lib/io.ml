@@ -30,13 +30,13 @@ let extract_track_files files =
   List.filter isTrackFile files
 
 let perist_key_record_mapping mapping_list dest =
-  let oc = open_out_gen [Open_creat; Open_append] 0o777 dest in
+  let oc = open_out_gen [Open_creat; Open_wronly] 0o777 dest in
   List.iter
     (fun (key, value) -> Printf.fprintf oc "%s: %s\n" key value)
     mapping_list ;
   close_out oc
 
 let write_org_file grouped_mapping dest =
-  let oc = open_out_gen [Open_creat; Open_wronly] 0o777 dest in
+  let oc = open_out_gen [Open_creat; Open_trunc; Open_wronly] 0o777 dest in
   let ppf = Format.formatter_of_out_channel oc in
   Org.print_groups ppf grouped_mapping

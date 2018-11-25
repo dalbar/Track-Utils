@@ -27,11 +27,7 @@ let title_to_initials track_details =
     Re.split (Re.compile (Re.Perl.re "\\s\\s*")) track_details.title
   in
   let initials =
-    List.map
-      (fun w ->
-        print_endline w ;
-        String.uppercase_ascii (String.sub w 0 1) )
-      words
+    List.map (fun w -> String.uppercase_ascii (String.sub w 0 1)) words
   in
   {track_details with title= String.concat "." initials}
 
