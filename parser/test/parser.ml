@@ -1,4 +1,6 @@
 open Track_utils_parser.Tracks
+open Track_utils_parser
+open Track_utils_helpers
 
 let wav_no_version = "1999/Sample Artist - Sample Track.wav"
 
@@ -28,6 +30,10 @@ let sample_use () =
   print_string "test wav and mp3, mp4\n" ;
   let tokens = Track_Tokens.track_tokenizer test_buffer in
   tokens
+
+let sample_parse_org () =
+  let content = Io.read_file_to_string "parser/test/db.org" in
+  Org.parse content
 
 let test_tokenizer_simple_wav_token () =
   let test_buffer = Buffer.create 180 in

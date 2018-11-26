@@ -159,8 +159,7 @@ type record_mapping = string * track_record
 
 type track_block = Year | AuthorAndPrefix | Title | Version | Extension
 
-type property_difference =
-  {key: string; diff: track_record_field * track_record_field}
+type property_difference = {key: string; diff: string * string}
 
 let empty =
   { year= ""
@@ -173,6 +172,12 @@ let empty =
   ; version= ""
   ; version_plus= []
   ; extension= "" }
+
+let track_record_field_to_string field =
+  match field with
+  | Word w -> w
+  | Words w -> String.concat ";" w
+  | Vinyl b -> if b then "vinyl" else "not vinyl"
 
 let key_to_field r key =
   match key with
@@ -204,7 +209,13 @@ let differences_record r1 r2 =
     ; "extension" ]
   in
   let paired_field =
-    List.map (fun key -> {key; diff= (field_r1 key, field_r2 key)}) keys
+    List.map
+      (fun key ->
+        { key
+        ; diff=
+            ( field_r1 key |> track_record_field_to_string
+            , field_r2 key |> track_record_field_to_string ) } )
+      keys
   in
   List.filter (fun {diff= f1, f2; _} -> f1 <> f2) paired_field
 

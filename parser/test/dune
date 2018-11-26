@@ -3,4 +3,5 @@
   (libraries
    alcotest
    track_utils.parser
+   track_utils.helpers
   ))
