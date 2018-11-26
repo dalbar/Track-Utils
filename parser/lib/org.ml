@@ -7,6 +7,30 @@ type properties =
 
 type mapping_diff = {file: record_mapping list; properties: properties list}
 
+let print_warning {file; properties} dest =
+  let file_errors = List.length file in
+  let properties_errors = List.length properties in
+  printf "@.%d problems were found for %s@."
+    (file_errors + properties_errors)
+    dest ;
+  if file_errors > 0 then
+    printf "The following files are not existing in the current directory@." ;
+  List.iter (fun (name, _) -> printf "- %s@." name) file ;
+  if properties_errors > 0 then (
+    printf "@." ;
+    printf "The following titles have invalid properties@." ;
+    List.iter
+      (fun {merged= name, _; differences; _} ->
+        printf "@." ;
+        printf "title:    %s@." name ;
+        List.iter
+          (fun {key; diff= v1, v2} ->
+            printf "property: %s@." key ;
+            printf "expected: %s@." v2 ;
+            printf "actual:   %s@." v1 )
+          differences )
+      properties )
+
 let print_property_string ppf key value =
   fprintf ppf "@[<h>%s%s%s@[<h 2>%s@]@]@." ":" key ":    " value
 
@@ -30,7 +54,6 @@ let print_record ppf title record =
   p print_title title ;
   fprintf ppf ":PROPERTIES:@." ;
   p print_property_string "Author" record.author ;
-  print_endline record.author;
   p print_property_string "Author+" record.features ;
   p print_property_string "Title" record.title ;
   p print_property_string_list "Title+" record.title_plus ;
@@ -110,13 +133,15 @@ let mapping_differences m1 m2 =
     | (name, record) :: rest ->
         if Hashtbl.mem tbl2 name then
           let r2 = Hashtbl.find tbl2 name in
-          print_endline r2.author;
-          let property_differences = differences_record record r2 in
+          let property_differences =
+            differences_record record r2
+            |> List.filter (fun {key; _} -> key <> "feature_operator")
+          in
           if List.length property_differences > 0 then
             let properties_entry =
               { index= i
               ; merged= (name, record)
-              ; differences= differences_record record r2 }
+              ; differences= property_differences }
             in
             loop
               { differences with

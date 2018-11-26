@@ -27,10 +27,12 @@ let org_processing_pipe mapping dest =
     let to_key (_, r) = (r.vinyl, r.extension) in
     let org_content = CCOpt.wrap read_file_to_string dest in
     let org_ds = CCOpt.get_or ~default:"" org_content |> Org.parse in
-    let differences = Org.mapping_differences mapping org_ds in
-    let fixed_missing_files = org_ds @ differences.file in
+    let differences_org_to_mapping = Org.mapping_differences org_ds mapping in
+    Org.print_warning differences_org_to_mapping dest;
+    let differences_mapping_to_org = Org.mapping_differences mapping org_ds in
+    let fixed_missing_files = org_ds @ differences_mapping_to_org.file in
     let updated_records =
-      Org.patch_mapping fixed_missing_files differences.properties
+      Org.patch_mapping fixed_missing_files differences_mapping_to_org.properties
     in
     let grouped = group_by to_key updated_records in
     write_org_file grouped dest
