@@ -125,7 +125,7 @@ let revert =
 let nml =
   Arg.(
     value & flag
-    & info ["u"; "nml"] ~docv:"u" ~doc:"Patch NML File with org file")
+    & info ["v"; "nml"] ~docv:"v" ~doc:"Patch NML File with org file")
   
 let cmd =
   ( Term.(const track_cli $ revert $ recursive $ shorten $ org $nml $ path)
