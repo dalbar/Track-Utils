@@ -51,7 +51,11 @@ let history_processing_pipe files concat_cur_path =
       files
   else files
 
-let track_cli recurisve shorten org path =
+let nml_processing_pipe mapping files = 
+    let nml_files = List.filter (fun name ->  Filename.extension name = ".nml") files  in
+    List.iter (fun name -> Nml.patch_nml mapping name) nml_files
+
+let track_cli recurisve shorten org nml path =
   let rec loop cur_path dic_acc =
     let concat_cur_path file = concat_path cur_path file in
     let cur_files = Sys.readdir cur_path in
@@ -66,7 +70,8 @@ let track_cli recurisve shorten org path =
           (fun record files -> (Filename.basename files, record))
           track_records track_files
     in
-    if org then org_processing_pipe record_map (concat_cur_path "db.org") ;
+    if org then org_processing_pipe record_map (concat_cur_path "db.org");
+    if nml then nml_processing_pipe record_map files;
     if recurisve then
       match directories @ dic_acc with [] -> () | hd :: rest -> loop hd rest
   in
@@ -91,7 +96,12 @@ let recursive =
   let doc = "Execute operations recursively." in
   Arg.(value & flag & info ["r"; "R"; "recursive"] ~doc)
 
+let nml =
+  Arg.(
+    value & flag
+    & info ["u"; "nml"] ~docv:"u" ~doc:"Patch NML File with org file")
+  
 let cmd =
-  (Term.(const track_cli $ recursive $ shorten $ org $ path), Term.info "ls")
+  (Term.(const track_cli $ recursive $ shorten $ org $ nml $ path), Term.info "ls")
 
 let () = Term.(exit @@ eval cmd)

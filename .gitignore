@@ -10,7 +10,7 @@
 
 # ocamlbuild working directory
 _build/
-
+_opam
 # ocamlbuild targets
 *.byte
 *.native
@@ -27,3 +27,5 @@ setup.log
 test/tracks
 .track_utils
 *.org
+*.nml
+*.log
