@@ -23,20 +23,21 @@ let shortening_processing_pipe track_records concat_path1 =
   mapping_shortened_record
 
 let org_processing_pipe mapping dest =
-  if List.length mapping > 0 then
+  if List.length mapping > 0 then (
     let to_key (_, r) = (r.vinyl, r.extension) in
     let org_content = CCOpt.wrap read_file_to_string dest in
     let org_ds = CCOpt.get_or ~default:"" org_content |> Org.parse in
     let differences_org_to_mapping = Org.mapping_differences org_ds mapping in
-    Org.print_warning differences_org_to_mapping dest;
+    Org.print_warning differences_org_to_mapping dest ;
     let differences_mapping_to_org = Org.mapping_differences mapping org_ds in
     let fixed_missing_files = org_ds @ differences_mapping_to_org.file in
     let updated_records =
-      Org.patch_mapping fixed_missing_files differences_mapping_to_org.properties
+      Org.patch_mapping fixed_missing_files
+        differences_mapping_to_org.properties
     in
     let grouped = group_by to_key updated_records in
-    write_org_file grouped dest
-
+    write_org_file grouped dest )
+ 
 let history_processing_pipe files concat_cur_path =
   let dest = concat_cur_path ".track_utils" in
   if Sys.file_exists dest then
@@ -51,13 +52,34 @@ let history_processing_pipe files concat_cur_path =
       files
   else files
 
-let track_cli recurisve shorten org path =
+let reverting_processing_pipe shortened reverted path =
+  let to_key (_, r) = (r.vinyl, r.extension) in
+  let history =
+    List.map2
+      (fun shortened reverted -> (shortened, reverted))
+      shortened reverted
+    |> List.filter (fun (shortened, reverted) -> shortened <> reverted)
+  in
+  let history_file = concat_path path ".track_utils" in
+  let org_file = concat_path path "db.org" in
+  if Sys.file_exists history_file then (
+    List.iter (fun (shortened, long) -> Sys.rename shortened long) history ;
+    Sys.remove history_file ) ;
+  if Sys.file_exists org_file then
+    let org_content = CCOpt.wrap read_file_to_string org_file in
+    let org_ds = CCOpt.get_or ~default:"" org_content |> Org.parse in
+    let grouped = group_by to_key (Org.revert_mapping org_ds history) in
+    write_org_file grouped org_file
+
+let track_cli revert recurisve shorten org path =
   let rec loop cur_path dic_acc =
     let concat_cur_path file = concat_path cur_path file in
     let cur_files = Sys.readdir cur_path in
     let {directories; files} = extract_dirs_and_files cur_path cur_files in
     let track_files = extract_track_files files in
     let reverted_files = history_processing_pipe track_files concat_cur_path in
+    if revert then
+      reverting_processing_pipe track_files reverted_files cur_path ;
     let track_records = Tracks.parse_string_list reverted_files in
     let record_map =
       if shorten then shortening_processing_pipe track_records concat_cur_path
@@ -91,7 +113,12 @@ let recursive =
   let doc = "Execute operations recursively." in
   Arg.(value & flag & info ["r"; "R"; "recursive"] ~doc)
 
+let revert =
+  let doc = "Undo shortening operations." in
+  Arg.(value & flag & info ["u"] ~doc)
+
 let cmd =
-  (Term.(const track_cli $ recursive $ shorten $ org $ path), Term.info "ls")
+  ( Term.(const track_cli $ revert $ recursive $ shorten $ org $ path)
+  , Term.info "track-utils" )
 
 let () = Term.(exit @@ eval cmd)
