@@ -12,3 +12,7 @@ let parse ?(inv = false) history =
     (fun mapping -> split delim_regexp mapping |> list_pair_to_tuple)
     mappings
   |> CCHashtbl.of_list
+
+let get_hist_tbl ?(inv = false) history =
+  if inv then List.map (fun (l, r) -> (r, l)) history |> CCHashtbl.of_list
+  else CCHashtbl.of_list history

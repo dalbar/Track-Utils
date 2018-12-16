@@ -166,14 +166,14 @@ let patch_mapping mapping properties =
   loop mapping properties
 
 let revert_mapping mapping history =
-   let find_in_history name =
-      CCList.find_opt
-        (fun (shortened, _) -> name = Filename.basename shortened)
-        history
-    in
-      List.map
-        (fun (name, record) ->
-          find_in_history name
-          |> CCOpt.get_or ~default:(name, name)
-          |> fun (_, reverted) -> (Filename.basename reverted, record) )
-        mapping
+  let find_in_history name =
+    CCList.find_opt
+      (fun (shortened, _) -> name = Filename.basename shortened)
+      history
+  in
+  List.map
+    (fun (name, record) ->
+      find_in_history name
+      |> CCOpt.get_or ~default:(name, name)
+      |> fun (_, reverted) -> (Filename.basename reverted, record) )
+    mapping

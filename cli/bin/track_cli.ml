@@ -37,7 +37,7 @@ let org_processing_pipe mapping dest =
     in
     let grouped = group_by to_key updated_records in
     write_org_file grouped dest )
- 
+
 let history_processing_pipe files concat_cur_path =
   let dest = concat_cur_path ".track_utils" in
   if Sys.file_exists dest then
@@ -52,28 +52,29 @@ let history_processing_pipe files concat_cur_path =
       files
   else files
 
-let reverting_processing_pipe shortened reverted path =
+let reverting_processing_pipe history_pairs path =
   let to_key (_, r) = (r.vinyl, r.extension) in
-  let history =
-    List.map2
-      (fun shortened reverted -> (shortened, reverted))
-      shortened reverted
-    |> List.filter (fun (shortened, reverted) -> shortened <> reverted)
-  in
   let history_file = concat_path path ".track_utils" in
   let org_file = concat_path path "db.org" in
   if Sys.file_exists history_file then (
-    List.iter (fun (shortened, long) -> Sys.rename shortened long) history ;
+    List.iter
+      (fun (shortened, long) -> Sys.rename shortened long)
+      history_pairs ;
     Sys.remove history_file ) ;
   if Sys.file_exists org_file then
     let org_content = CCOpt.wrap read_file_to_string org_file in
     let org_ds = CCOpt.get_or ~default:"" org_content |> Org.parse in
-    let grouped = group_by to_key (Org.revert_mapping org_ds history) in
+    let grouped = group_by to_key (Org.revert_mapping org_ds history_pairs) in
     write_org_file grouped org_file
 
-let nml_processing_pipe mapping files = 
-    let nml_files = List.filter (fun name ->  Filename.extension name = ".nml") files  in
-    List.iter (fun name -> Nml.patch_nml mapping name) nml_files
+let nml_processing_pipe history_pairs mapping path files =
+  let history_tbl = History.get_hist_tbl ~inv:true history_pairs in
+  let nml_files =
+    List.filter (fun name -> Filename.extension name = ".nml") files in
+  let patch name = Nml.patch_nml history_tbl mapping path name in
+  List.iter
+    patch
+    nml_files
 
 let track_cli revert recurisve shorten org nml path =
   let rec loop cur_path dic_acc =
@@ -82,8 +83,13 @@ let track_cli revert recurisve shorten org nml path =
     let {directories; files} = extract_dirs_and_files cur_path cur_files in
     let track_files = extract_track_files files in
     let reverted_files = history_processing_pipe track_files concat_cur_path in
-    if revert then
-      reverting_processing_pipe track_files reverted_files cur_path ;
+    let history_pairs =
+      List.map2
+        (fun shortened reverted -> (shortened, reverted))
+        track_files reverted_files
+      |> List.filter (fun (shortened, reverted) -> shortened <> reverted)
+    in
+    if revert then reverting_processing_pipe history_pairs cur_path ;
     let track_records = Tracks.parse_string_list reverted_files in
     let record_map =
       if shorten then shortening_processing_pipe track_records concat_cur_path
@@ -92,8 +98,8 @@ let track_cli revert recurisve shorten org nml path =
           (fun record files -> (Filename.basename files, record))
           track_records track_files
     in
-    if org then org_processing_pipe record_map (concat_cur_path "db.org");
-    if nml then nml_processing_pipe record_map files;
+    if org then org_processing_pipe record_map (concat_cur_path "db.org") ;
+    if nml then nml_processing_pipe history_pairs record_map cur_path files ;
     if recurisve then
       match directories @ dic_acc with [] -> () | hd :: rest -> loop hd rest
   in
@@ -126,9 +132,9 @@ let nml =
   Arg.(
     value & flag
     & info ["v"; "nml"] ~docv:"v" ~doc:"Patch NML File with org file")
-  
+
 let cmd =
-  ( Term.(const track_cli $ revert $ recursive $ shorten $ org $nml $ path)
+  ( Term.(const track_cli $ revert $ recursive $ shorten $ org $ nml $ path)
   , Term.info "track-utils" )
 
 let () = Term.(exit @@ eval cmd)
