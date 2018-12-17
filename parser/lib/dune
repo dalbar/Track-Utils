@@ -2,5 +2,5 @@
   (name track_utils_parser)
   (public_name track_utils.parser)
   (synopsis "A parser for Track Lists")
-  (libraries  re containers fmt)
+  (libraries  re containers fmt markup)
 )
