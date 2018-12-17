@@ -70,11 +70,10 @@ let reverting_processing_pipe history_pairs path =
 let nml_processing_pipe history_pairs mapping path files =
   let history_tbl = History.get_hist_tbl ~inv:true history_pairs in
   let nml_files =
-    List.filter (fun name -> Filename.extension name = ".nml") files in
+    List.filter (fun name -> Filename.extension name = ".nml") files
+  in
   let patch name = Nml.patch_nml history_tbl mapping path name in
-  List.iter
-    patch
-    nml_files
+  List.iter patch nml_files
 
 let track_cli revert recurisve shorten org nml path =
   let rec loop cur_path dic_acc =
