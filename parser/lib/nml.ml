@@ -68,6 +68,7 @@ let patch_entry element history_tbl mapping cur_path =
       in
       let element_atts = attibutes_to_hashtbl atts in
       Hashtbl.replace element_atts ("", "ARTIST") record.Tracks.author ;
+      Hashtbl.replace element_atts ("", "TITLE") record.Tracks.title ;
       Element
         (name, CCHashtbl.to_list element_atts, new_location :: other_elements) )
     else element
