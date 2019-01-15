@@ -14,20 +14,25 @@ let read_file_to_string src =
   in
   loop ""
 
-let extract_dirs_and_files path input =
-  Array.fold_left
-    (fun {directories; files} cur_file ->
-      let path_to_file = concat_path path cur_file in
-      if Sys.is_directory path_to_file then
-        {directories= path_to_file :: directories; files}
-      else {directories; files= path_to_file :: files} )
-    {directories= []; files= []}
-    input
-
 let extract_track_files files =
   let validExtensions = [".mp4"; ".mp3"; ".jpg"; ".wav"; ".wmv"] in
   let isTrackFile file = List.mem (Filename.extension file) validExtensions in
   List.filter isTrackFile files
+
+let extract_track_files_from_dir dir parent = 
+  Sys.readdir dir |> Array.to_list |> extract_track_files |> List.map (fun n -> parent ^ "/" ^ n)
+
+let extract_dirs_and_track_files path input =
+  Array.fold_left
+    (fun {directories; files} cur_file ->
+      let path_to_file = concat_path path cur_file in
+      if Sys.is_directory path_to_file then
+        let new_files = extract_track_files_from_dir path_to_file cur_file in
+        {directories= path_to_file :: directories; files = new_files @ files}
+      else {directories; files}
+    )
+    {directories= []; files= []}
+    input
 
 let perist_key_record_mapping mapping_list dest =
   let oc = open_out_gen [Open_creat; Open_wronly] 0o777 dest in

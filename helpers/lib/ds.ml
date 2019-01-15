@@ -1,5 +1,5 @@
 let group_by to_key list =
-  let tbl = Hashtbl.create 100 in
+  let tbl = Hashtbl.create 10000 in
   List.iter
     (fun entry ->
       let key = to_key entry in

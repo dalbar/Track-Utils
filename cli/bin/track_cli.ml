@@ -22,17 +22,19 @@ let shortening_processing_pipe track_records concat_path1 =
       mapping_shortened_old ) ;
   mapping_shortened_record
 
-let org_processing_pipe mapping dest =
+let org_processing_pipe history_pairs mapping dest =
   if List.length mapping > 0 then (
-    let to_key (_, r) = (r.vinyl, r.extension) in
+    let history_tbl = History.get_hist_tbl history_pairs ~inv:true in
+    let to_key (_, r) = (r.vinyl, r.extension, r.year) in
     let org_content = CCOpt.wrap read_file_to_string dest in
     let org_ds = CCOpt.get_or ~default:"" org_content |> Org.parse in
-    let differences_org_to_mapping = Org.mapping_differences org_ds mapping in
+    let differences_org_to_mapping = Org.mapping_differences org_ds mapping history_tbl in
     Org.print_warning differences_org_to_mapping dest ;
-    let differences_mapping_to_org = Org.mapping_differences mapping org_ds in
+    let differences_mapping_to_org = Org.mapping_differences mapping org_ds history_tbl in
     let fixed_missing_files = org_ds @ differences_mapping_to_org.file in
+    let fixed_shortened_dup = List.filter (fun (name, _) -> List.mem name differences_org_to_mapping.delete |> (=) false ) fixed_missing_files in
     let updated_records =
-      Org.patch_mapping fixed_missing_files
+      Org.patch_mapping fixed_shortened_dup
         differences_mapping_to_org.properties
     in
     let grouped = group_by to_key updated_records in
@@ -45,9 +47,8 @@ let history_processing_pipe files concat_cur_path =
     let hist_tbl = History.parse history in
     List.map
       (fun file ->
-        let basename = Filename.basename file in
-        if Hashtbl.mem hist_tbl basename then
-          Hashtbl.find hist_tbl basename |> concat_cur_path
+        if Hashtbl.mem hist_tbl file then
+          Hashtbl.find hist_tbl file
         else file )
       files
   else files
@@ -79,13 +80,12 @@ let track_cli revert recurisve shorten org nml path =
   let rec loop cur_path dic_acc =
     let concat_cur_path file = concat_path cur_path file in
     let cur_files = Sys.readdir cur_path in
-    let {directories; files} = extract_dirs_and_files cur_path cur_files in
-    let track_files = extract_track_files files in
-    let reverted_files = history_processing_pipe track_files concat_cur_path in
+    let {directories; files } = extract_dirs_and_track_files cur_path cur_files in
+    let reverted_files = history_processing_pipe files concat_cur_path in
     let history_pairs =
       List.map2
         (fun shortened reverted -> (shortened, reverted))
-        track_files reverted_files
+        files reverted_files
       |> List.filter (fun (shortened, reverted) -> shortened <> reverted)
     in
     if revert then reverting_processing_pipe history_pairs cur_path ;
@@ -95,9 +95,9 @@ let track_cli revert recurisve shorten org nml path =
       else
         List.map2
           (fun record files -> (Filename.basename files, record))
-          track_records track_files
+          (List.rev track_records) files
     in
-    if org then org_processing_pipe record_map (concat_cur_path "db.org") ;
+    if org then org_processing_pipe history_pairs record_map (concat_cur_path "db.org") ;
     if nml then nml_processing_pipe history_pairs record_map cur_path files ;
     if recurisve then
       match directories @ dic_acc with [] -> () | hd :: rest -> loop hd rest
